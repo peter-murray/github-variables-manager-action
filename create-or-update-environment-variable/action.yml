@@ -1,0 +1,28 @@
+name: 'Variables: create or update environment variable'
+description: Creates or updates an environment variable value on a repository
+author: Peter Murray
+
+inputs:
+  github_token:
+    description: The GitHub token that has 'repo:admin' permissions (or variables:write for fine grained permissions) to access and modify variables on the specified repository
+    required: true
+
+  repository:
+    description: The full path to the repository to save the variable to
+    required: true
+
+  environment:
+    description: The name of the environment for the variable
+    required: true
+
+  variable:
+    description: The name of the variable to add or update
+    required: true
+
+  value:
+    description: The value for the variable to be stored
+    required: true
+
+runs:
+  using: node16
+  main: '../dist/create-or-update-environment-variable/index.js'

@@ -1,4 +1,4 @@
-import { GitHub } from '../github/github';
+import { GitHubOctokit } from '../github/github';
 import { OrganizationVariable } from './OrganizationVariable';
 
 export type OrgVisibility = 'all' | 'private' | 'selected';
@@ -49,11 +49,11 @@ export type Variable = {
 
 export class VariablesManager {
 
-  private octokit: typeof GitHub;
+  private octokit: GitHubOctokit;
 
   private organization: string;
 
-  constructor(octokit: typeof GitHub, organization: string) {
+  constructor(octokit: GitHubOctokit, organization: string) {
     this.octokit = octokit;
     this.organization = organization;
   }
@@ -63,41 +63,37 @@ export class VariablesManager {
       org: this.organization,
       name: name
     }).then(resp => {
-      if (resp.status === 200) {
-        const data = resp.data;
-
-        if (data.selected_repositories_url) {
-          //TODO this is paginated endpoint, need to handle that in the future, but not for initial use case
-          return this.octokit.rest.actions.listSelectedReposForOrgVariable({
-            org: this.organization,
-            name: name,
-            per_page: 100
-          }).then(resp => {
-            const selectedRepos = resp.data;
-
-            let shared: Repository[] | undefined;
-            if (selectedRepos.total_count > 0) {
-              shared = selectedRepos.repositories.map(repo => {
-                return {
-                  id: repo.id,
-                  node_id: repo.node_id,
-                  name: repo.name,
-                  full_name: repo.full_name,
-                  owner: repo.owner.login
-                };
-              })
-            }
-
-            return shared;
-          }).then(sharedRepos => {
-            return new OrganizationVariable(this.organization, data, sharedRepos);
-          });
-        } else {
-          return new OrganizationVariable(this.organization, resp.data);
-        }
-      } else {
+      if (resp.status !== 200) {
         throw new Error(`Unexpected status code ${resp.status}`);
       }
+      const data = resp.data;
+
+      if (data.selected_repositories_url) {
+        //TODO this is paginated endpoint, need to handle that in the future, but not for initial use case
+        return this.octokit.rest.actions.listSelectedReposForOrgVariable({
+          org: this.organization,
+          name: name,
+          per_page: 100
+        }).then(resp => {
+          const selectedRepos = resp.data;
+
+          let shared: Repository[] | undefined;
+          if (selectedRepos.total_count > 0) {
+            shared = selectedRepos.repositories.map(repo => {
+              return {
+                id: repo.id,
+                node_id: repo.node_id,
+                name: repo.name,
+                full_name: repo.full_name,
+                owner: repo.owner.login
+              };
+            })
+          }
+          return new OrganizationVariable(this.organization, data, shared);
+        });
+      }
+
+      return new OrganizationVariable(this.organization, resp.data);
     }).catch(err => {
       if (err.status === 404) {
         return undefined;
@@ -167,7 +163,7 @@ export class VariablesManager {
         throw new Error(`repository ${repositoryName} was not found in organization ${this.organization}`);
       }
 
-      return this.removeRepositoryFromSecret(variable, repository);
+      return this.removeRepositoryFromVariable(variable, repository);
     });
   }
 
@@ -181,7 +177,7 @@ export class VariablesManager {
     });
   }
 
-  async removeRepositoryFromSecret(variable: OrganizationVariable, repo: Repository): Promise<boolean> {
+  async removeRepositoryFromVariable(variable: OrganizationVariable, repo: Repository): Promise<boolean> {
     return this.octokit.rest.actions.removeSelectedRepoFromOrgVariable({
       org: this.organization,
       name: variable.name,
@@ -191,7 +187,7 @@ export class VariablesManager {
     })
   }
 
-  async getEnvironment(repositoryName: string, environmentName: string): Promise<Environment> {
+  async getEnvironment(repositoryName: string, environmentName: string): Promise<Environment | undefined> {
     return this.getRepository(repositoryName)
       .then(repo => {
         if (repo) {
@@ -263,14 +259,7 @@ export class VariablesManager {
           value: value,
         }
 
-        if (!existingVariable) {
-          // New variable, some values are no longer optional
-          payload['visibility'] = visibility ? visibility : 'all';
-
-          if (visibility === 'selected') {
-            payload['selected_repository_ids'] = selectedRepoIds ? selectedRepoIds : [];
-          }
-        } else {
+        if (existingVariable) {
           // updating an existing variable, some parameters are optional if not provided
           if (visibility) {
             payload['visibility'] = visibility;
@@ -281,20 +270,31 @@ export class VariablesManager {
           if (visibility === 'selected' && selectedRepoIds) {
             payload['selected_repository_ids'] = selectedRepoIds ? selectedRepoIds : [];
           }
-        }
 
-        if (existingVariable) {
-          return this.octokit.rest.actions.updateOrgVariable(payload)
+          return this.octokit.rest.actions.updateOrgVariable(payload).then(result => {
+            if (result.status === 204) {
+              return 'updated';
+            } else {
+              throw new Error(`Unexpected status code from setting variable value ${result.status}`);
+            }
+          })
         } else {
-          return this.octokit.rest.actions.createOrgVariable(payload);
-        }
-      }).then(result => {
-        if (result.status === 201) {
-          return 'created';
-        } else if (result.status === 204) {
-          return 'updated';
-        } else {
-          throw new Error(`Unexpected status code from setting secret value ${result.status}`);
+          // New variable, some values are no longer optional
+          payload['visibility'] = visibility ? visibility : 'all';
+
+          if (visibility === 'selected') {
+            payload['selected_repository_ids'] = selectedRepoIds ? selectedRepoIds : [];
+          }
+
+          //@ts-ignore
+          return this.octokit.rest.actions.createOrgVariable(payload)
+          .then(result => {
+            if (result.status === 201) {
+              return 'created';
+            } else {
+              throw new Error(`Unexpected status code from setting variable value ${result.status}`);
+            }
+          });
         }
       });
   }
@@ -370,6 +370,9 @@ export class VariablesManager {
         } else {
           promise = this.getRepository(repositoryName)
             .then(repository => {
+              if (!repository) {
+                throw new Error(`Repository ${repositoryName} was not found in organization ${this.organization}`);
+              }
               return this.octokit.rest.actions.createEnvironmentVariable({
                 repository_id: repository.id,
                 environment_name: environmentName,
