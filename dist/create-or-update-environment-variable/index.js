@@ -43,7 +43,7 @@ async function run() {
 }
 run();
 async function exec() {
-    const variableName = (0, utils_1.getRequiredInput)('secret'), variableValue = (0, utils_1.getRequiredInput)('value'), repository = (0, utils_1.getRequiredInput)('repository'), environment = (0, utils_1.getRequiredInput)('environment');
+    const variableName = (0, utils_1.getRequiredInput)('varaible'), variableValue = (0, utils_1.getRequiredInput)('value'), repository = (0, utils_1.getRequiredInput)('repository'), environment = (0, utils_1.getRequiredInput)('environment');
     try {
         const repo = validateRepository(repository);
         const variables = new VariablesManager_1.VariablesManager((0, utils_1.getOctokit)(), repo.owner);
