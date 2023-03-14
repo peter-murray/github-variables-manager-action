@@ -12,7 +12,7 @@ async function run() {
 run();
 
 async function exec() {
-  const variableName: string = getRequiredInput('varaible')
+  const variableName: string = getRequiredInput('variable')
     , variableValue: string = getRequiredInput('value')
     , repository: string = getRequiredInput('repository')
     , environment: string = getRequiredInput('environment')
