@@ -2,13 +2,13 @@
   "name": "github-variables-manager-action",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
     "build": "tsc",
-    "build:create-or-update-variable": "npm run build && ncc build lib/actions/addOrUpdateRepositoryVariable.js -o dist/create-or-update-variable --source-map",
-    "build:create-or-update-environment-variable": "npm run build && ncc build lib/actions/addOrUpdateEnvironmentVariable.js -o dist/create-or-update-environment-variable --source-map",
-    "package": "npm run build:create-or-update-variable && npm run build:create-or-update-environment-variable",
-    "test": "vitest"
+    "build:create-or-update-repository-variable": "ncc build lib/actions/add-or-update-repository-variable.js -o dist/create-or-update-repository-variable --source-map",
+    "build:create-or-update-environment-variable": "ncc build lib/actions/add-or-update-environment-variable.js -o dist/create-or-update-environment-variable --source-map",
+    "build:actions": "npm run build && npm run build:create-or-update-repository-variable && npm run build:create-or-update-environment-variable",
+    "test": "vitest run"
   },
   "repository": {
     "type": "git",
@@ -29,10 +29,9 @@
     "@octokit/plugin-rest-endpoint-methods": "^7.0.1"
   },
   "devDependencies": {
-    "@types/node": "^14.14.44",
-    "@vercel/ncc": "^0.36.0",
-    "ts-node": "^9.1.1",
+    "@types/node": "^22.1.0",
+    "@vercel/ncc": "^0.38.1",
     "typescript": "^4.2.4",
-    "vitest": "^0.29.2"
+    "vitest": "^2.0.5"
   }
 }

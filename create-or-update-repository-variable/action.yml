@@ -1,5 +1,5 @@
-name: 'Variables: create or update environment variable'
-description: Creates or updates an environment variable value on a repository
+name: 'Variables: create or update repository variable'
+description: Creates or updates a variable value on a repository
 author: Peter Murray
 
 inputs:
@@ -9,10 +9,6 @@ inputs:
 
   repository:
     description: The full path to the repository to save the variable to
-    required: true
-
-  environment:
-    description: The name of the environment for the variable
     required: true
 
   variable:
@@ -30,4 +26,4 @@ inputs:
 
 runs:
   using: node20
-  main: '../dist/create-or-update-environment-variable/index.js'
+  main: '../dist/create-or-update-repository-variable/index.js'

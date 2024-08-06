@@ -1,4 +1,4 @@
-import { OrgVariableData, Repository } from "./VariablesManager";
+import { OrgVariableData, Repository } from "./VariablesManager.js";
 
 export class OrganizationVariable {
 

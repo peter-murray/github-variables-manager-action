@@ -1,6 +1,6 @@
 import * as core from '@actions/core';
-import * as github from './github/github';
-import { GitHubOctokit } from './github/github';
+import * as github from './github/github.js';
+import { GitHubOctokit } from './github/github.js';
 
 
 export function getGitHubToken(): string {

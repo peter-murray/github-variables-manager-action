@@ -6,7 +6,7 @@ import * as http from 'http'
 import * as httpClient from '@actions/http-client'
 
 import {Octokit} from '@octokit/core'
-import {OctokitOptions, OctokitPlugin} from '@octokit/core/dist-types/types'
+import {OctokitOptions, OctokitPlugin} from '@octokit/core/dist-types/types.js'
 import {restEndpointMethods} from '@octokit/plugin-rest-endpoint-methods'
 import {paginateRest} from '@octokit/plugin-paginate-rest'
 

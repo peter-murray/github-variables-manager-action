@@ -1,6 +1,6 @@
 import * as core from '@actions/core';
-import { VariablesManager } from '../variables/VariablesManager';
-import { getRequiredInput, getOctokit } from '../utils'
+import { VariablesManager } from '../variables/VariablesManager.js';
+import { getRequiredInput, getOctokit } from '../utils.js'
 
 async function run() {
   try {
@@ -15,13 +15,14 @@ async function exec() {
   const variableName: string = getRequiredInput('variable')
     , variableValue: string = getRequiredInput('value')
     , repository: string = getRequiredInput('repository')
+    , overwrite: boolean = core.getBooleanInput('overwrite_existing', {required: true})
     ;
 
   try {
     const repo = validateRepository(repository);
     const variables: VariablesManager = new VariablesManager(getOctokit(), repo.owner);
 
-    const result: string = await variables.saveOrUpdateRepositoryVariable(repo.repo, variableName, variableValue);
+    const result: string = await variables.saveOrUpdateRepositoryVariable(repo.repo, variableName, variableValue, overwrite);
 
     if (result) {
       core.info(`Successfully ${result} variable ${repository}/${variableName}.`);

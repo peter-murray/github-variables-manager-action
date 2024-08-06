@@ -34946,7 +34946,7 @@ function requireStringArgumentValue(name, value) {
     return strValue;
 }
 //# sourceMappingURL=utils.js.map
-;// CONCATENATED MODULE: ./lib/actions/add-or-update-environment-variable.js
+;// CONCATENATED MODULE: ./lib/actions/add-or-update-repository-variable.js
 
 
 
@@ -34960,20 +34960,20 @@ async function run() {
 }
 run();
 async function exec() {
-    const variableName = getRequiredInput('variable'), variableValue = getRequiredInput('value'), repository = getRequiredInput('repository'), environment = getRequiredInput('environment'), overwrite = core.getBooleanInput('overwrite_existing', { required: true });
+    const variableName = getRequiredInput('variable'), variableValue = getRequiredInput('value'), repository = getRequiredInput('repository'), overwrite = core.getBooleanInput('overwrite_existing', { required: true });
     try {
         const repo = validateRepository(repository);
         const variables = new VariablesManager(utils_getOctokit(), repo.owner);
-        const result = await variables.saveOrUpdateEnvironmentVariable(repo.repo, environment, variableName, variableValue, overwrite);
+        const result = await variables.saveOrUpdateRepositoryVariable(repo.repo, variableName, variableValue, overwrite);
         if (result) {
-            core.info(`Successfully updated variable ${repository}/${environment}/${variableName}.`);
+            core.info(`Successfully ${result} variable ${repository}/${variableName}.`);
         }
         else {
-            core.setFailed(`Did not succeed in creating/updating variable ${repository}/${environment}/${variableName}`);
+            core.setFailed(`Did not succeed in creating/updating variable ${repository}/${variableName}`);
         }
     }
     catch (err) {
-        core.error(`Failed to add/update variable ${repository}/${environment}/${variableName}.`);
+        core.error(`Failed to add/update variable ${repository}/${variableName}.`);
         core.setFailed(err);
     }
 }
@@ -34989,7 +34989,7 @@ function validateRepository(repository) {
         throw new Error(`A fully qualified repository name of the form '<owner>/<repo>' is required, but was '${repository}'.`);
     }
 }
-//# sourceMappingURL=add-or-update-environment-variable.js.map
+//# sourceMappingURL=add-or-update-repository-variable.js.map
 })();
 
 

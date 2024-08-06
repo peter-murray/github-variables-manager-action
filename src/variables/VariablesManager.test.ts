@@ -7,13 +7,13 @@ const TEST_ORGANIZATION = 'octodemo';
 const TEST_ORGANIZATION_VARIABLE_NAME = 'ORGANIZATION_TEST_VARIABLE';
 const TEST_ORGANIZATION_VARIABLE_VALUE = 'organization test variable used in test suites, do not delete';
 
-const TEST_REPOSITORY_NAME = 'actions-variables-test';
+const TEST_REPOSITORY_NAME = 'secrets-test-repository';
 const TEST_REPOSITORY_VARIABLE_NAME = 'TEST_VARIABLE';
 const TEST_REPOSITORY_VARIABLE_VALUE = 'repository_value';
 
-const TEST_ENVIRONMENT_NAME = 'production';
+const TEST_ENVIRONMENT_NAME = 'testing';
 const TEST_ENVIRONMENT_VARIABLE_NAME = 'TEST_VARIABLE';
-const TEST_ENVIRONMENT_VARIABLE_VALUE = 'environment_production_value';
+const TEST_ENVIRONMENT_VARIABLE_VALUE = 'environment_testing_value';
 
 describe('VariablesManager', () => {
 
@@ -107,6 +107,22 @@ describe('VariablesManager', () => {
       expect(result).toBeDefined();
       expect(result).toBe('updated');
     });
+
+    test('it should not overwrite an existing environment variable', async () => {
+      const variableName = NEW_ENVIRONMENT_VARIABLE_NAME;
+      const variableValue = `${Date.now()}`;
+
+      const existing = await variablesManager.saveOrUpdateEnvironmentVariable(TEST_REPOSITORY_NAME, TEST_ENVIRONMENT_NAME, variableName, variableValue);
+      expect(existing).toBeDefined();
+
+      const result = await variablesManager.saveOrUpdateEnvironmentVariable(TEST_REPOSITORY_NAME, TEST_ENVIRONMENT_NAME, variableName, "abc", false);
+      expect(result).toBeDefined();
+      expect(result).toBe('exists');
+
+      const variable = await variablesManager.getEnvironmentVariable(TEST_REPOSITORY_NAME, TEST_ENVIRONMENT_NAME, variableName);
+      expect(variable).toBeDefined();
+      expect(variable?.value).toBe(variableValue);
+    });
   });
 
   describe('#saveOrUpdateRepositoryVariable()', async () => {
@@ -186,8 +202,17 @@ describe('VariablesManager', () => {
     let orgVariable;
     let repository;
 
+    async function sleep(ms: number) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
     beforeEach(async () => {
-      await variablesManager.saveOrUpdateOrganizationVariable(VARIABLE_NAME, 'Limited access organization test variable used in test suite', 'selected');
+      await variablesManager.deleteOrganizationVariable(VARIABLE_NAME);
+      await sleep(1000);
+
+      const created = await variablesManager.saveOrUpdateOrganizationVariable(VARIABLE_NAME, 'Limited access organization test variable used in test suite', 'selected');
+      expect(created).toBe('created');
+      await sleep(5000);
 
       orgVariable = await variablesManager.getOrganizationVariable(VARIABLE_NAME);
       expect(orgVariable).toBeDefined();
@@ -211,18 +236,22 @@ describe('VariablesManager', () => {
       expect(result).toBeDefined();
       expect(result).toBe(true);
 
+      await sleep(1000);
+
       let organizationVariable = await variablesManager.getOrganizationVariable(VARIABLE_NAME);
       expect(organizationVariable).toBeDefined();
       expect(organizationVariable?.visibility).toBe('selected');
       expect(organizationVariable?.sharedRepositories).toHaveLength(1);
 
-      const removalResult = await variablesManager.removeVariableFromRepository(VARIABLE_NAME, TEST_REPOSITORY_NAME);
+      const removalResult = await variablesManager.removeOrganizationVariableFromRepository(VARIABLE_NAME, TEST_REPOSITORY_NAME);
       expect(removalResult).toBeDefined();
       expect(removalResult).toBe(true);
 
+      await sleep(1000);
+
       organizationVariable = await variablesManager.getOrganizationVariable(VARIABLE_NAME);
       expect(organizationVariable).toBeDefined();
-      expect(organizationVariable?.sharedRepositories).toSatisfy(value => { return value === undefined || value.length === 0});
+      expect(organizationVariable?.sharedRepositories).toSatisfy(value => { return value === undefined || value === null || value.length === 0});
     });
   });
 });
