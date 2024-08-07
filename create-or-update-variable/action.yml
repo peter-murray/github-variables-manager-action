@@ -7,6 +7,11 @@ inputs:
     description: The GitHub token that has 'repo:admin' permissions (or variables:write for fine grained permissions) to access and modify variables on the specified repository
     required: true
 
+  github_api_url:
+    description: The GitHub API URL to use for the request
+    required: false
+    default: ${{ github.api_url }}
+    
   repository:
     description: The full path to the repository to save the variable to
     required: true
@@ -23,7 +28,7 @@ inputs:
     description: Flag to overwrite an existing secret
     default: true
     required: false
-    
+
 runs:
   using: node20
   main: '../dist/create-or-update-repository-variable/index.js'

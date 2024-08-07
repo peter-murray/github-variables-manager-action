@@ -1,6 +1,5 @@
 import * as core from '@actions/core';
 import * as github from './github/github.js';
-import { GitHubOctokit } from './github/github.js';
 
 
 export function getGitHubToken(): string {
@@ -18,15 +17,22 @@ export function getRequiredInput(name: string): string {
   return core.getInput(name, { required: true });
 }
 
-export function getOctokit(token?: string): GitHubOctokit {
+export function getOctokit(token?: string, baseUrl?: string) {
   let octokitToken: string;
-
   if (!token) {
     octokitToken = getRequiredInput('github_token');
   } else {
     octokitToken = token;
   }
-  return github.getOctokit(octokitToken);
+
+  let githubApiUrl: string;
+  if (baseUrl) {
+    githubApiUrl = baseUrl;
+  } else {
+    githubApiUrl = core.getInput('github_api_url') || process.env.GITHUB_API_URL || 'https://api.github.com';
+  }
+
+  return github.getOctokit(octokitToken, {baseUrl: githubApiUrl});
 }
 
 export function requireStringArgumentValue(name: string, value: any) {

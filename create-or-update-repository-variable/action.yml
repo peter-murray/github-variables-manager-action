@@ -6,6 +6,11 @@ inputs:
   github_token:
     description: The GitHub token that has 'repo:admin' permissions (or variables:write for fine grained permissions) to access and modify variables on the specified repository
     required: true
+    
+  github_api_url:
+    description: The GitHub API URL to use for the request
+    required: false
+    default: ${{ github.api_url }}
 
   repository:
     description: The full path to the repository to save the variable to

@@ -34925,7 +34925,7 @@ function getGitHubToken() {
 function getRequiredInput(name) {
     return core.getInput(name, { required: true });
 }
-function utils_getOctokit(token) {
+function utils_getOctokit(token, baseUrl) {
     let octokitToken;
     if (!token) {
         octokitToken = getRequiredInput('github_token');
@@ -34933,7 +34933,14 @@ function utils_getOctokit(token) {
     else {
         octokitToken = token;
     }
-    return getOctokit(octokitToken);
+    let githubApiUrl;
+    if (baseUrl) {
+        githubApiUrl = baseUrl;
+    }
+    else {
+        githubApiUrl = core.getInput('github_api_url') || process.env.GITHUB_API_URL || 'https://api.github.com';
+    }
+    return getOctokit(octokitToken, { baseUrl: githubApiUrl });
 }
 function requireStringArgumentValue(name, value) {
     if (value === null || value === undefined) {
